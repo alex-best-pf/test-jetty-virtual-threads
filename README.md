@@ -65,3 +65,12 @@ Expected repro behavior:
 ```powershell
 mvn test
 ```
+
+The test will make a call to `/testing` endpoint, then wait for 63 seconds and call again. On Windows this test will fail with an error on a second call:
+
+```powershell
+[ERROR] Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 65.65 s <<< FAILURE! -- in com.example.jettytest.DualPortJettyApplicationTest
+[ERROR] com.example.jettytest.DualPortJettyApplicationTest.shouldReturn201AndEmptyBodyForTestingEndpoints -- Time elapsed: 65.54 s <<< ERROR!
+java.util.concurrent.TimeoutException: Total timeout 2000 ms elapsed
+```
+
