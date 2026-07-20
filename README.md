@@ -34,7 +34,7 @@ Optional custom ports (first argument is `/testing` port, second is `/testing2` 
 mvn exec:java "-Dexec.args=8080 9090"
 ```
 
-## Reproduce
+## Reproduce Manually
 
 ```powershell
 curl -i http://localhost:8080/testing
@@ -60,17 +60,33 @@ Expected repro behavior:
     - virtual threads are enabled via `VirtualThreadPool`
     - JVM 21+ on Windows
 
-## Test
+## Automated Test Cases
+
+`DualPortJettyApplicationTest` includes four scenarios. Each test:
+
+- Calls `GET /testing` and expects `201`
+- Waits for ~63 seconds of inactivity
+- Calls `GET /testing` again
+
+### Test Matrix 
+
+| Test method | Thread pool | Connectors | Second call after ~63s idle |
+| ---- | ----  |  ----- | ----- |
+| `testWithQueuedThreadPoolTwoConnectors` | `QueuedThreadPool` | 2 | `201` expected |
+| `testWithQueuedThreadPoolOneConnector` | `QueuedThreadPool` | 1 | `201` expected |
+| `testWithVirtualThreadPoolTwoConnectors` | `VirtualThreadPool` | 2 | May hang/timeout (known repro case on Windows) |
+| `testWithVirtualThreadPoolOneConnector` | `VirtualThreadPool` | 1 | `201` expected |
+
+## Run Tests
 
 ```powershell
 mvn test
 ```
 
-The test will make a call to `/testing` endpoint, then wait for 63 seconds and call again. On Windows this test will fail with an error on a second call:
+On Windows, the third scenario (`testWithVirtualThreadPoolTwoConnectors`) will fail on the second call with a timeout error:
 
 ```powershell
-[ERROR] Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 65.65 s <<< FAILURE! -- in com.example.jettytest.DualPortJettyApplicationTest
-[ERROR] com.example.jettytest.DualPortJettyApplicationTest.shouldReturn201AndEmptyBodyForTestingEndpoints -- Time elapsed: 65.54 s <<< ERROR!
+[ERROR] com.example.jettytest.DualPortJettyApplicationTest.testWithVirtualThreadPoolTwoConnectors -- Time elapsed: 65.15 s <<< ERROR!
 java.util.concurrent.TimeoutException: Total timeout 2000 ms elapsed
 ```
 

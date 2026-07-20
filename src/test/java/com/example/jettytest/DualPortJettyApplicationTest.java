@@ -13,10 +13,14 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.server.Server;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class DualPortJettyApplicationTest {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(DualPortJettyApplicationTest.class);
@@ -43,11 +47,107 @@ class DualPortJettyApplicationTest {
     }
 
     @Test
-    void shouldReturn201AndEmptyBodyForTestingEndpoints() throws Exception {
+    @Order(1)    
+    void testWithQueuedThreadPoolTwoConnectors() throws Exception {
         int port8080 = findFreePort();
         int port9090 = findFreePort();
+        
+        LOGGER.info("Testing with QueuedThreadPool Two Connectors");
 
-        server = DualPortJettyApplication.createServer(port8080, port9090);
+        server = DualPortJettyApplication.createServerWithQueuedThreadPool(port8080, port9090);
+        server.start();
+
+        String testingUrl = "http://localhost:" + port8080 + "/testing";
+        ContentResponse testingResponse = get(testingUrl);
+
+        assertEquals(201, testingResponse.getStatus());
+        assertEquals("", testingResponse.getContentAsString());
+        
+        LOGGER.info("First call to {}", testingUrl);
+        try {
+        	 Thread.sleep(63000L); // Wait for a 60+s
+        } catch (InterruptedException e) {
+        	 LOGGER.error("Interrupted", e);
+		}
+       
+        LOGGER.info("Second call to {}", testingUrl);
+        testingResponse = get(testingUrl);
+        assertEquals(201, testingResponse.getStatus());
+        assertEquals("", testingResponse.getContentAsString());
+
+    }
+    
+    @Test
+    @Order(2)    
+    void testWithQueuedThreadPoolOneConnector() throws Exception {
+        int port8080 = findFreePort();
+        
+        LOGGER.info("Testing with QueuedThreadPool One Connector");
+
+        server = DualPortJettyApplication.createServerWithQueuedThreadPool(port8080, 0);
+        server.start();
+
+        String testingUrl = "http://localhost:" + port8080 + "/testing";
+        ContentResponse testingResponse = get(testingUrl);
+
+        assertEquals(201, testingResponse.getStatus());
+        assertEquals("", testingResponse.getContentAsString());
+        
+        LOGGER.info("First call to {}", testingUrl);
+        try {
+        	 Thread.sleep(63000L); // Wait for a 60+s
+        } catch (InterruptedException e) {
+        	 LOGGER.error("Interrupted", e);
+		}
+       
+        LOGGER.info("Second call to {}", testingUrl);
+        testingResponse = get(testingUrl);
+        assertEquals(201, testingResponse.getStatus());
+        assertEquals("", testingResponse.getContentAsString());
+
+    }
+    
+  
+    
+    @Test()
+    @Order(3)
+    void testWithVirtualThreadPoolTwoConnectors() throws Exception {
+        int port8080 = findFreePort();
+        int port9090 = findFreePort();
+        
+        LOGGER.info("Testing with VirtualThreadPool Two Connectors");
+
+        server = DualPortJettyApplication.createServerWithVirtualThreadPoolOnly(port8080, port9090);
+        server.start();
+
+        String testingUrl = "http://localhost:" + port8080 + "/testing";
+        ContentResponse testingResponse = get(testingUrl);
+
+        assertEquals(201, testingResponse.getStatus());
+        assertEquals("", testingResponse.getContentAsString());
+        
+        LOGGER.info("First call to {}", testingUrl);
+        try {
+        	 Thread.sleep(63000L); // Wait for a 60+s
+        } catch (InterruptedException e) {
+        	 LOGGER.error("Interrupted", e);
+		}
+       
+        LOGGER.info("Second call to {}", testingUrl);
+        testingResponse = get(testingUrl);
+        assertEquals(201, testingResponse.getStatus());
+        assertEquals("", testingResponse.getContentAsString());
+
+    }
+    
+    @Test()
+    @Order(4)
+    void testWithVirtualThreadPoolOneConnector() throws Exception {
+        int port8080 = findFreePort();
+        
+        LOGGER.info("Testing with VirtualThreadPool One Connector");
+
+        server = DualPortJettyApplication.createServerWithVirtualThreadPoolOnly(port8080, 0);
         server.start();
 
         String testingUrl = "http://localhost:" + port8080 + "/testing";
