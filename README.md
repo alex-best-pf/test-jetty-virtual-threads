@@ -37,8 +37,8 @@ mvn exec:java "-Dexec.args=8080 9090"
 ## Reproduce Manually
 
 ```powershell
-curl -i http://localhost:8080/testing
-curl -i http://localhost:9090/testing2
+curl -i -m 5 http://localhost:8080/testing
+curl -i -m 5 http://localhost:8080/testing
 ```
 
 Expected immediate results:
@@ -49,7 +49,7 @@ Expected immediate results:
 Now wait for at least 60 seconds without sending requests, then call again:
 
 ```powershell
-curl -i http://localhost:8080/testing
+curl -i -m 5http://localhost:8080/testing
 ```
 
 Expected repro behavior:
@@ -72,8 +72,8 @@ Expected repro behavior:
 
 | Test method | Thread pool | Connectors | Second call after ~63s idle |
 | ---- | ----  |  ----- | ----- |
-| `testWithQueuedThreadPoolTwoConnectors` | `QueuedThreadPool` | 2 | `201` expected |
-| `testWithQueuedThreadPoolOneConnector` | `QueuedThreadPool` | 1 | `201` expected |
+| `testWithQueuedThreadPoolTwoConnectors` | `QueuedThreadPool` with `VirtualThreadPool` as Executor | 2 | `201` expected |
+| `testWithQueuedThreadPoolOneConnector` | `QueuedThreadPool` with `VirtualThreadPool` as Executor | 1 | `201` expected |
 | `testWithVirtualThreadPoolTwoConnectors` | `VirtualThreadPool` | 2 | May hang/timeout (known repro case on Windows) |
 | `testWithVirtualThreadPoolOneConnector` | `VirtualThreadPool` | 1 | `201` expected |
 
