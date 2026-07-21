@@ -49,7 +49,7 @@ Expected immediate results:
 Now wait for at least 60 seconds without sending requests, then call again:
 
 ```powershell
-curl -i -m 5http://localhost:8080/testing
+curl -i -m 5 http://localhost:8080/testing
 ```
 
 Expected repro behavior:
